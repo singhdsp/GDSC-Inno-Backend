@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Level</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .EasyMDEContainer {
+            margin-bottom: 10px;
+        }
+
+        .editor-toolbar {
+            border-radius: 6px 6px 0 0;
+        }
+
+        .CodeMirror {
+            border-radius: 0 0 6px 6px;
+            min-height: 200px;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .language-option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .language-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .language-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .language-option input[type="radio"] {
+            display: none;
+        }
+
+        .dynamic-section {
+            border: 2px dashed #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .testcase-item,
+        .hint-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .add-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+        }
+
+        .difficulty-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .difficulty-option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .difficulty-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .difficulty-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .difficulty-option input[type="radio"] {
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .code-template-container {
+            margin-top: 10px;
+        }
+
+        .template-preview {
+            background: #f8f9fa;
+            padding: 0;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            margin-top: 10px;
+        }
+
+        .template-preview textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: #f8f9fa;
+            resize: vertical;
+        }
+
+        .template-preview textarea:focus {
+            outline: 2px solid #667eea;
+            background: white;
+        }
+
+        .edit-template-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .edit-template-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Add New Level</h1>
+        
+        <div id="message" class="message"></div>
+
+        <form id="addLevelForm">
+            <!-- Title -->
+            <div class="form-group">
+                <label for="title">Title *</label>
+                <input type="text" id="title" name="title" required placeholder="e.g., Two Sum">
+                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    ℹ️ Level number will be auto-generated
+                </small>
+            </div>
+
+            <!-- Description with Markdown Editor -->
+            <div class="form-group">
+                <label for="description">Description (Markdown) *</label>
+                <textarea id="description" name="description"></textarea>
+                <input type="file" id="fileUpload" accept="image/*,video/*,.pdf" style="display: none;">
+                <div id="uploadStatus" style="margin-top: 10px; font-size: 0.9rem; color: #666;"></div>
+                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 8px;">
+                    💡 Use the toolbar to format text, add images, create tables, and more. Click the upload icon (📤) to upload files.
+                </small>
+            </div>
+
+            <!-- Language Selection -->
+            <div class="form-group">
+                <label>Programming Language *</label>
+                <div class="language-grid">
+                    <div class="language-option" onclick="selectLanguage('python', 71)">
+                        <input type="radio" name="language" value="python" data-id="71">
+                        <div>🐍 Python</div>
+                    </div>
+                    <div class="language-option" onclick="selectLanguage('javascript', 63)">
+                        <input type="radio" name="language" value="javascript" data-id="63">
+                        <div>📜 JavaScript</div>
+                    </div>
+                    <div class="language-option" onclick="selectLanguage('bash', 46)">
+                        <input type="radio" name="language" value="bash" data-id="46">
+                        <div>💻 Bash</div>
+                    </div>
+                    <div class="language-option" onclick="selectLanguage('sql', 82)">
+                        <input type="radio" name="language" value="sql" data-id="82">
+                        <div>🗃️ SQL</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Template Preview -->
+            <div class="form-group code-template-container" id="codeTemplateContainer" style="display: none;">
+                <label>Code Template (Editable) *</label>
+                <div class="template-preview">
+                    <textarea id="codeTemplatePreview" rows="8"></textarea>
+                </div>
+                <small style="color: #666; font-size: 0.85rem;">💡 Default template is auto-generated. You can edit it as needed.</small>
+            </div>
+
+            <!-- Test Cases -->
+            <div class="form-group">
+                <label>Test Cases *</label>
+                <div class="dynamic-section" id="testCasesContainer">
+                    <!-- Test cases will be added here dynamically -->
+                </div>
+                <button type="button" class="add-btn" onclick="addTestCase()">+ Add Test Case</button>
+            </div>
+
+            <!-- Hints -->
+            <div class="form-group">
+                <label>Hints (Optional)</label>
+                <div class="dynamic-section" id="hintsContainer">
+                    <!-- Hints will be added here dynamically -->
+                </div>
+                <button type="button" class="add-btn" onclick="addHint()">+ Add Hint</button>
+            </div>
+
+            <!-- Difficulty -->
+            <div class="form-group">
+                <label>Difficulty *</label>
+                <div class="difficulty-grid">
+                    <div class="difficulty-option" onclick="selectDifficulty('Easy', 1)">
+                        <input type="radio" name="difficulty" value="Easy" data-score="1">
+                        <div>🟢 Easy</div>
+                    </div>
+                    <div class="difficulty-option" onclick="selectDifficulty('Medium', 2)">
+                        <input type="radio" name="difficulty" value="Medium" data-score="2">
+                        <div>🟡 Medium</div>
+                    </div>
+                    <div class="difficulty-option" onclick="selectDifficulty('Hard', 3)">
+                        <input type="radio" name="difficulty" value="Hard" data-score="3">
+                        <div>🔴 Hard</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Create Level</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script>
+        // Initialize EasyMDE Markdown Editor
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('description'),
+            spellChecker: false,
+            placeholder: "Write your level description in Markdown...",
+            toolbar: [
+                "bold", 
+                "italic", 
+                "strikethrough",
+                "|",
+                "heading", 
+                "heading-smaller", 
+                "heading-bigger",
+                "|",
+                "code",
+                "quote", 
+                "|",
+                "unordered-list", 
+                "ordered-list",
+                "|",
+                "link", 
+                "image",
+                "table",
+                "|",
+                "preview", 
+                "side-by-side", 
+                "fullscreen",
+                "|",
+                "guide",
+                "|",
+                {
+                    name: "custom-upload",
+                    action: function customUpload(editor) {
+                        document.getElementById('fileUpload').click();
+                    },
+                    className: "fa fa-upload",
+                    title: "Upload Image/File",
+                }
+            ],
+            minHeight: "300px"
+        });
+
+        let selectedLanguage = null;
+        let selectedLanguageId = null;
+        let selectedDifficulty = null;
+        let selectedDifficultyScore = null;
+
+        // Code templates for different languages
+        const codeTemplates = {
+            python: `def solution():
+    # Your code here
+    pass`,
+            javascript: `function solution() {
+    // Your code here
+}`,
+            bash: `#!/bin/bash
+# Your code here`,
+            sql: `-- Your SQL query here
+SELECT * FROM table;`
+        };
+
+        // Language selection
+        function selectLanguage(language, id) {
+            selectedLanguage = language;
+            selectedLanguageId = id;
+            
+            document.querySelectorAll('.language-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // Show code template and set default value
+            document.getElementById('codeTemplateContainer').style.display = 'block';
+            document.getElementById('codeTemplatePreview').value = codeTemplates[language];
+        }
+
+        // Difficulty selection
+        function selectDifficulty(difficulty, score) {
+            selectedDifficulty = difficulty;
+            selectedDifficultyScore = score;
+            
+            document.querySelectorAll('.difficulty-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
+        // File upload to get URL
+        document.getElementById('fileUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.textContent = '⏳ Uploading...';
+            uploadStatus.style.color = '#667eea';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const fileUrl = data.url;
+                    const fileName = file.name;
+                    
+                    // Insert markdown image/link syntax at cursor
+                    const isImage = file.type.startsWith('image/');
+                    const markdownSyntax = isImage 
+                        ? `![${fileName}](${fileUrl})` 
+                        : `[${fileName}](${fileUrl})`;
+                    
+                    const cm = easyMDE.codemirror;
+                    const doc = cm.getDoc();
+                    const cursor = doc.getCursor();
+                    doc.replaceRange(markdownSyntax, cursor);
+
+                    uploadStatus.textContent = '✅ File uploaded and inserted!';
+                    uploadStatus.style.color = '#28a745';
+                } else {
+                    uploadStatus.textContent = '❌ Upload failed';
+                    uploadStatus.style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                uploadStatus.textContent = '❌ Upload error';
+                uploadStatus.style.color = '#dc3545';
+            }
+
+            // Reset file input
+            e.target.value = '';
+        });
+
+        // Test Case Management
+        let testCaseCount = 0;
+
+        function addTestCase() {
+            testCaseCount++;
+            const container = document.getElementById('testCasesContainer');
+            const div = document.createElement('div');
+            div.className = 'testcase-item';
+            div.id = `testcase-${testCaseCount}`;
+            div.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeTestCase(${testCaseCount})">Remove</button>
+                <label>Input *</label>
+                <textarea class="testcase-input" rows="3" placeholder="e.g., [2, 7, 11, 15], 9" required></textarea>
+                <label style="margin-top: 10px;">Expected Output *</label>
+                <textarea class="testcase-output" rows="3" placeholder="e.g., [0, 1]" required></textarea>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeTestCase(id) {
+            document.getElementById(`testcase-${id}`).remove();
+        }
+
+        // Hint Management
+        let hintCount = 0;
+
+        function addHint() {
+            hintCount++;
+            const container = document.getElementById('hintsContainer');
+            const div = document.createElement('div');
+            div.className = 'hint-item';
+            div.id = `hint-${hintCount}`;
+            div.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeHint(${hintCount})">Remove</button>
+                <input type="text" class="hint-text" placeholder="Enter hint..." />
+            `;
+            container.appendChild(div);
+        }
+
+        function removeHint(id) {
+            document.getElementById(`hint-${id}`).remove();
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type} show`;
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        // Form submission
+        document.getElementById('addLevelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating Level...';
+
+            // Gather form data
+            const title = document.getElementById('title').value;
+            const description = easyMDE.value();
+
+            // Validate language selection
+            if (!selectedLanguage || !selectedLanguageId) {
+                showMessage('Please select a programming language', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Level';
+                return;
+            }
+
+            // Validate difficulty selection
+            if (!selectedDifficulty || !selectedDifficultyScore) {
+                showMessage('Please select a difficulty level', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Level';
+                return;
+            }
+
+            // Gather test cases
+            const testCases = [];
+            document.querySelectorAll('.testcase-item').forEach(item => {
+                const input = item.querySelector('.testcase-input').value.trim();
+                const output = item.querySelector('.testcase-output').value.trim();
+                if (input && output) {
+                    testCases.push({ input, output });
+                }
+            });
+
+            if (testCases.length === 0) {
+                showMessage('Please add at least one test case', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Level';
+                return;
+            }
+
+            // Gather hints
+            const hints = [];
+            document.querySelectorAll('.hint-text').forEach(input => {
+                const hint = input.value.trim();
+                if (hint) hints.push(hint);
+            });
+
+            // Get code template (edited or default)
+            const codeTemplate = document.getElementById('codeTemplatePreview').value || codeTemplates[selectedLanguage];
+
+            // Prepare payload
+            const payload = {
+                title,
+                description,
+                languageId: selectedLanguageId,
+                language: selectedLanguage.charAt(0).toUpperCase() + selectedLanguage.slice(1),
+                codeTemplate: codeTemplate,
+                testCases,
+                hints,
+                difficulty: selectedDifficulty,
+                difficultyScore: selectedDifficultyScore
+            };
+
+            try {
+                const response = await fetch('/api/levels/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const levelNumber = data.data.levelNumber;
+                    showMessage(`✅ Level ${levelNumber} created successfully!`, 'success');
+                    // Reset form
+                    document.getElementById('addLevelForm').reset();
+                    easyMDE.value('');
+                    document.getElementById('testCasesContainer').innerHTML = '';
+                    document.getElementById('hintsContainer').innerHTML = '';
+                    document.querySelectorAll('.language-option, .difficulty-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    document.getElementById('codeTemplateContainer').style.display = 'none';
+                    selectedLanguage = null;
+                    selectedLanguageId = null;
+                    selectedDifficulty = null;
+                    selectedDifficultyScore = null;
+                    // Re-add initial test case
+                    addTestCase();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed to create level'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ Error creating level', 'error');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Level';
+        });
+
+        // Add initial test case
+        addTestCase();
+    </script>
+</body>
+</html>

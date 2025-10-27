@@ -25,10 +25,10 @@ const levelSchema = new mongoose.Schema({
     codeTemplate:{
         type: String,
     },
-    testCases:{
-        type: [String],
-        required: true
-    },
+    testCases:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'TestCase'
+    }],
     hints:{
         type: [String],
     },
@@ -43,3 +43,5 @@ const levelSchema = new mongoose.Schema({
     }
 },
 { timestamps: true });
+
+module.exports = mongoose.model('Level', levelSchema);
