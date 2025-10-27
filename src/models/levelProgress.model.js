@@ -8,6 +8,10 @@ const levelProgressSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    levelId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Level'
+    },
     startAt:{
         type: Date,
         default: Date.now

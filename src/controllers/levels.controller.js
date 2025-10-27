@@ -1,6 +1,7 @@
 const Level = require('../models/levels.model');
 const Team = require('../models/team.model');
 const TestCase = require('../models/testCases.model');
+const LevelProgress = require('../models/levelProgress.model');
 
 const addLevel = async(req, res) => {
     try {
@@ -22,7 +23,7 @@ const addLevel = async(req, res) => {
                 message: 'Missing required fields'
             });
         }
-        
+
         const lastLevel = await Level.findOne().sort({ levelNumber: -1 });
         const levelNumber = lastLevel ? lastLevel.levelNumber + 1 : 1;
 
@@ -108,15 +109,27 @@ const getIndLevel = async(req,res)=>{
 const getTeamCurrentLevel = async(req,res)=>{
     try {
         const {id} =req.user;
-        const team = await Team.findById(id).select('completedLevels');
+        const team = await Team.findById(id).select('levelCompleted');
         if(!team){
             return res.status(404).json({success:false, message: 'Team not found' });
         }
-        const currentLevelNumber = team.completedLevels.length + 1;
+        const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
         const level = await Level.findOne({levelNumber: currentLevelNumber}).select('-testCases -hints');
+        
         if(!level){
             return res.status(404).json({success:false, message: 'No more levels available' });
         }
+        
+        const levelProgress = await LevelProgress.findOne({ teamId: id, levelId: level._id });
+        if(!levelProgress){
+            await LevelProgress.create({
+                teamId: id,
+                level: level.levelNumber,
+                levelId: level._id,
+                startAt: new Date(),
+            });
+        }
+
         res.status(200).json({success:true, data: level, message: 'Team current level fetched successfully' });
         
     } catch (error) {
@@ -128,12 +141,12 @@ const getTeamCurrentLevel = async(req,res)=>{
 const getHintsForLevel = async (req, res) => {
     try {
         const { id } = req.user;
-        const team = await Team.findById(id).select('score completedLevels');
+        const team = await Team.findById(id).select('score levelCompleted');
         if (!team) {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
         
-        const currentLevelNumber = team.completedLevels.length + 1;
+        const currentLevelNumber = team.levelCompleted.length + 1;
         const level = await Level.findOne({ levelNumber: currentLevelNumber }).select('hints');
         if (!level) {
             return res.status(404).json({ success: false, message: 'Level not found' });

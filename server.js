@@ -6,6 +6,7 @@ const connectDB = require('./src/database/connection');
 const authRoutes = require('./src/routes/auth.route');
 const levelsRoutes = require('./src/routes/levels.route');
 const uploadRoutes = require('./src/routes/upload.route');
+const submittionRoutes = require('./src/routes/submission.route');
 
 dotenv.config();
 connectDB();
@@ -22,6 +23,7 @@ app.use(express.static(path.join(__dirname, 'views')));
 app.use('/api/auth', authRoutes);
 app.use('/api/levels', levelsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/submission', submittionRoutes);
 
 app.get('/add-level', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'add-level.html'));
