@@ -80,7 +80,7 @@ const submitLevel = async (req, res) => {
                 totalTestCases,
                 testResults: testResults.results,
                 attempts: levelProgress.attempts,
-                isCompleted: levelProgress.isCompleted
+                isCompleted: levelProgress.isCompleted,
             }
         });
 

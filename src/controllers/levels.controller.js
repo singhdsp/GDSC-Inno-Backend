@@ -82,11 +82,14 @@ const addLevel = async(req, res) => {
 
 const getLevels = async (req, res) => {
     try {
-        const levels = await Level.find().select('levelNumber title difficulty').sort({ levelNumber: 1 });
-        if(levels.length === 0){
-            return  res.status(404).json({success:false, message: 'No levels found' });
+        const {id} =req.user;
+        const team = await Team.findById(id).select('levelCompleted');
+        const totalLevels = await Level.countDocuments();
+        if(!team){
+            return res.status(404).json({success:false, message: 'Team not found' });
         }
-        res.status(200).json({success:true, data: levels , message: 'Levels fetched successfully' });
+        const isMoreLevels = await Level.findOne({ levelNumber: Number(team.levelCompleted) + 1 });
+        res.status(200).json({success:true, message: 'Levels fetched successfully' , count: totalLevels , currentLevel: team.levelCompleted , isMoreLevels: isMoreLevels ? true : false });
     } catch (error) {
         res.status(500).json({success:false, message: 'Error fetching levels', error: error});
         
@@ -110,14 +113,15 @@ const getTeamCurrentLevel = async(req,res)=>{
     try {
         const {id} =req.user;
         const team = await Team.findById(id).select('levelCompleted');
+        const isMoreLevels = await Level.findOne({ levelNumber: Number(team.levelCompleted) + 1 });
         if(!team){
-            return res.status(404).json({success:false, message: 'Team not found' });
+            return res.status(404).json({success:false, message: 'Team not found' , isMoreLevels: isMoreLevels ? true : false});
         }
         const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
         const level = await Level.findOne({levelNumber: currentLevelNumber}).select('-testCases -hints');
         
         if(!level){
-            return res.status(404).json({success:false, message: 'No more levels available' });
+            return res.status(404).json({success:false, message: 'No more levels available' , isMoreLevels: false});
         }
         
         const levelProgress = await LevelProgress.findOne({ teamId: id, levelId: level._id });

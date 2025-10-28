@@ -8,6 +8,7 @@ const authRoutes = require('./src/routes/auth.route');
 const levelsRoutes = require('./src/routes/levels.route');
 const uploadRoutes = require('./src/routes/upload.route');
 const submittionRoutes = require('./src/routes/submission.route');
+const leaderboardRoutes = require('./src/routes/leaderboard.route');
 
 dotenv.config();
 connectDB();
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/levels', levelsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/submission', submittionRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/add-level', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'add-level.html'));

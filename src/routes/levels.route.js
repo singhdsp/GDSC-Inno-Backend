@@ -5,8 +5,8 @@ const { addLevel, getLevels, getIndLevel, getTeamCurrentLevel, getHintsForLevel 
 const { authenticateTeam } = require('../middlewares/auth.middleware');
 
 router.post('/add', addLevel);
-router.get('/', getLevels);
-router.get('/:levelId', getIndLevel);
+router.get('/', authenticateTeam, getLevels);
+router.get('/:levelId', authenticateTeam, getIndLevel);
 router.get('/team/current', authenticateTeam, getTeamCurrentLevel);
 router.get('/team/hints', authenticateTeam, getHintsForLevel);
 
