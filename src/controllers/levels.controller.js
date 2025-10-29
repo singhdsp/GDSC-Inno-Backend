@@ -149,8 +149,8 @@ const getHintsForLevel = async (req, res) => {
         if (!team) {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
-        
-        const currentLevelNumber = team.levelCompleted.length + 1;
+
+        const currentLevelNumber = Number(team.levelCompleted) + 1;
         const level = await Level.findOne({ levelNumber: currentLevelNumber }).select('hints');
         if (!level) {
             return res.status(404).json({ success: false, message: 'Level not found' });
