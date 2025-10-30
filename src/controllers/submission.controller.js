@@ -59,7 +59,7 @@ const submitLevel = async (req, res) => {
         levelProgress.codeSubmitted = code;
         levelProgress.characterCountInCode = code.length;
         levelProgress.testCasesPassed = testResults.results
-            .map((result, index) => result.passed ? level.testCases[index]._id : null)
+            .map((result, index) => result.passed && testCases[index] ? testCases[index]._id : null)
             .filter(id => id !== null);
         
         if (allPassed) {
