@@ -1,6 +1,7 @@
 const Level = require('../models/levels.model');
 const LevelProgress = require('../models/levelProgress.model');
 const Team = require('../models/team.model');
+const CacheUtil = require('../utils/cache.util');
 
 const {runTestCases} = require('../utils/judge0.util');
 
@@ -13,13 +14,23 @@ const submitLevel = async (req, res) => {
         if (!team) {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
-        const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
-        const level = await Level.findOne({ levelNumber: currentLevelNumber }).populate('testCases');
-        if (!level) {
-            return res.status(404).json({ success: false, message: 'Level not found' });
-        }
 
-        const testResults = await runTestCases(code, level.languageId, level.testCases);
+        const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
+        let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
+        if (!level) {
+            level = await Level.findOne({ levelNumber: currentLevelNumber });
+            if (!level) {
+                return res.status(404).json({ success: false, message: 'Level not found' });
+            }
+            await CacheUtil.setLevel(level.toObject());
+        }
+        let testCases = await CacheUtil.getTestCases(level._id);
+        if (!testCases) {
+            const levelWithTestCases = await Level.findById(level._id).populate('testCases');
+            testCases = levelWithTestCases.testCases;
+            await CacheUtil.setTestCases(level._id, testCases);
+        }
+        const testResults = await runTestCases(code, level.languageId, testCases);
         if (!testResults.success) {
             return res.status(500).json({
                 success: false,
@@ -67,6 +78,7 @@ const submitLevel = async (req, res) => {
                 team.levelCompleted = level.levelNumber;
                 team.score += level.difficultyScore;
                 await team.save();
+                await CacheUtil.invalidateTeam(teamId);
             }
         }
         await levelProgress.save();

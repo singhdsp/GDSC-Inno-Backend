@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
 const connectDB = require('./src/database/connection');
+const { connectRedis } = require('./src/config/redis.config');
 
 const authRoutes = require('./src/routes/auth.route');
 const levelsRoutes = require('./src/routes/levels.route');
@@ -11,7 +12,11 @@ const submittionRoutes = require('./src/routes/submission.route');
 const leaderboardRoutes = require('./src/routes/leaderboard.route');
 
 dotenv.config();
-connectDB();
+
+(async () => {
+    await connectDB();
+    await connectRedis();
+})();
 
 const app = express();
 
