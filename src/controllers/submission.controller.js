@@ -15,7 +15,7 @@ const submitLevel = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
 
-        const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
+        const currentLevelNumber = (Number(team.levelCompleted) || 0) + 1;
         let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
         if (!level) {
             level = await Level.findOne({ levelNumber: currentLevelNumber });
@@ -59,8 +59,8 @@ const submitLevel = async (req, res) => {
         levelProgress.codeSubmitted = code;
         levelProgress.characterCountInCode = code.length;
         levelProgress.testCasesPassed = testResults.results
-            .filter(r => r.passed)
-            .map((_, index) => level.testCases[index]._id);
+            .map((result, index) => result.passed ? level.testCases[index]._id : null)
+            .filter(id => id !== null);
         
         if (allPassed) {
             levelProgress.isCompleted = true;

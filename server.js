@@ -8,15 +8,10 @@ const { connectRedis } = require('./src/config/redis.config');
 const authRoutes = require('./src/routes/auth.route');
 const levelsRoutes = require('./src/routes/levels.route');
 const uploadRoutes = require('./src/routes/upload.route');
-const submittionRoutes = require('./src/routes/submission.route');
+const submissionRoutes = require('./src/routes/submission.route');
 const leaderboardRoutes = require('./src/routes/leaderboard.route');
 
 dotenv.config();
-
-(async () => {
-    await connectDB();
-    await connectRedis();
-})();
 
 const app = express();
 
@@ -31,7 +26,7 @@ app.use(express.static(path.join(__dirname, 'views')));
 app.use('/api/auth', authRoutes);
 app.use('/api/levels', levelsRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/submission', submittionRoutes);
+app.use('/api/submission', submissionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/add-level', (req, res) => {
@@ -42,6 +37,16 @@ app.get('/', (req, res) => {
     res.json({ message: 'API is running...' });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port http://localhost:${PORT}`);
-});
+(async () => {
+    try {
+        await connectDB();
+        await connectRedis();
+        
+        app.listen(PORT, () => {
+            console.log(`Server is running on port http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+})();
