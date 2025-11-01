@@ -4,7 +4,8 @@ const CacheUtil = require('../utils/cache.util');
 const getLeaderboard = async (req, res) => {
     try {
         const {id} = req.user;
-        const {page = 1, limit = 10} = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const team = await Team.findById(id).select('teamId levelCompleted score');
         if (!team) {
             return res.status(404).json({success: false, message: 'Team not found'});
@@ -72,7 +73,7 @@ const getLeaderboard = async (req, res) => {
                 success: true,
                 data: [],
                 total: 0,
-                page: Number(page),
+                page: page,
                 pages: 0,
                 yourRank: 0,
                 yourScore: team.score,
@@ -84,7 +85,7 @@ const getLeaderboard = async (req, res) => {
         const userTeam = result.find(t => t._id.toString() === id);
         const userRank = userTeam ? userTeam.rank : 0;
         const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + parseInt(limit);
+        const endIndex = startIndex + limit;
         const leaderboard = result.slice(startIndex, endIndex).map(team => ({
             _id: team._id,
             teamId: team.teamId,
@@ -95,7 +96,7 @@ const getLeaderboard = async (req, res) => {
         const responseData = {
             data: leaderboard,
             total: totalTeams,
-            page: Number(page),
+            page: page,
             pages: Math.ceil(totalTeams / limit),
             yourRank: userRank,
             yourScore: team.score,
@@ -105,7 +106,7 @@ const getLeaderboard = async (req, res) => {
         await CacheUtil.setLeaderboard(page, limit, {
             data: leaderboard,
             total: totalTeams,
-            page: Number(page),
+            page: page,
             pages: Math.ceil(totalTeams / limit)
         });
 

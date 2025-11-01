@@ -94,7 +94,7 @@ const getLevels = async (req, res) => {
             totalLevels = await Level.countDocuments();
             await CacheUtil.setLevelCount(totalLevels);
         }
-        const nextLevelNumber = Number(team.levelCompleted) + 1;
+        const nextLevelNumber = (Number(team.levelCompleted) || 0) + 1;
         let nextLevel = await CacheUtil.getLevelByNumber(nextLevelNumber);
         if (nextLevel === null) {
             nextLevel = await Level.findOne({ levelNumber: nextLevelNumber }).lean();
@@ -111,7 +111,7 @@ const getLevels = async (req, res) => {
             isMoreLevels: nextLevel ? true : false
         });
     } catch (error) {
-        res.status(500).json({success: false, message: 'Error fetching levels', error: error});
+        res.status(500).json({success: false, message: 'Error fetching levels', error: error.message});
     }
 };
 
@@ -128,7 +128,7 @@ const getIndLevel = async(req, res) => {
         }
         res.status(200).json({success: true, data: level, message: 'Level fetched successfully'});
     } catch (error) {
-        res.status(500).json({success: false, message: 'Error fetching level', error: error});
+        res.status(500).json({success: false, message: 'Error fetching level', error: error.message});
     }
 };
 
@@ -140,7 +140,7 @@ const getTeamCurrentLevel = async(req, res) => {
             return res.status(404).json({success: false, message: 'Team not found'});
         }
         
-        const currentLevelNumber = Number(team.levelCompleted) + 1 || 1;
+        const currentLevelNumber = (Number(team.levelCompleted) || 0) + 1;
         let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
         if (!level) {
             level = await Level.findOne({levelNumber: currentLevelNumber}).select('-testCases -hints').lean();
@@ -165,7 +165,7 @@ const getTeamCurrentLevel = async(req, res) => {
         }
         res.status(200).json({success: true, data: level, message: 'Team current level fetched successfully'});
     } catch (error) {
-        res.status(500).json({success: false, message: 'Error fetching team current level', error: error});
+        res.status(500).json({success: false, message: 'Error fetching team current level', error: error.message});
     }
 };
 
@@ -177,7 +177,7 @@ const getHintsForLevel = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
 
-        const currentLevelNumber = Number(team.levelCompleted) + 1;
+        const currentLevelNumber = (Number(team.levelCompleted) || 0) + 1;
         let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
         if (!level) {
             level = await Level.findOne({ levelNumber: currentLevelNumber }).select('hints').lean();
@@ -196,7 +196,7 @@ const getHintsForLevel = async (req, res) => {
         await CacheUtil.invalidateTeam(id);
         res.status(200).json({ success: true, data: level.hints, message: 'Hints fetched successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching hints', error: error });
+        res.status(500).json({ success: false, message: 'Error fetching hints', error: error.message });
     }
 };
 
