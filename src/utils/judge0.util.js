@@ -472,7 +472,7 @@ const submitToJudge0 = async (sourceCode, languageId, stdin = '', expectedOutput
         };
 
         if (JUDGE0_API_KEY) {
-            headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
+            headers['X-Auth-Token'] = JUDGE0_API_KEY;
         }
 
         const response = await axios.post(
@@ -507,7 +507,7 @@ const getSubmissionResult = async (token) => {
 
         // Add API key if available
         if (JUDGE0_API_KEY) {
-            headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
+            headers['X-Auth-Token'] = JUDGE0_API_KEY;
         }
 
         const response = await axios.get(
