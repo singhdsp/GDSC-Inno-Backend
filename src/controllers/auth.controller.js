@@ -9,24 +9,22 @@ const login = async(req,res)=>{
         if (!user) {
             return res.status(401).json({ success: false, message: "Invalid teamId or password" });
         }
-        let firstLoginTime = user.loginAt;
         const now = new Date();
-        const timeSinceLogin = now - new Date(firstLoginTime);
         const gameTimeInHours = parseInt(process.env.GAME_TIME_HOURS) || 2;
         const gameTimeInMs = gameTimeInHours * 60 * 60 * 1000;
-        if (!firstLoginTime || timeSinceLogin > gameTimeInMs) {
+        const tokenValidityHours = parseInt(process.env.TOKEN_VALIDITY_HOURS) || 24;
+        let firstLoginTime = user.loginAt;
+
+        if (!firstLoginTime) {
             user.loginAt = now;
             firstLoginTime = now;
+            user.isActive = true;
             await user.save();
         }
-        const timeRemaining = gameTimeInMs - (now - new Date(firstLoginTime));
-        if (timeRemaining <= 0) {
-            return res.status(401).json({ 
-                success: false, 
-                message: `Game session expired. Your ${gameTimeInHours}-hour game time is over.` 
-            });
-        }
-        const expiresInSeconds = Math.floor(timeRemaining / 1000);
+
+        const timeSinceFirstLogin = now - new Date(firstLoginTime);
+        const gameTimeRemaining = gameTimeInMs - timeSinceFirstLogin;
+        const isGameActive = gameTimeRemaining > 0;
         const token = jwt.sign(
             { 
                 id: user._id, 
@@ -34,7 +32,7 @@ const login = async(req,res)=>{
                 firstLoginTime: firstLoginTime.toISOString()
             }, 
             process.env.JWT_SECRET, 
-            { expiresIn: expiresInSeconds }
+            { expiresIn: `${tokenValidityHours}h` }
         );
         
         if(!token){
@@ -55,8 +53,9 @@ const login = async(req,res)=>{
             message: "Login successful",
             data: { 
                 teamId: user.teamId,
-                timeRemaining: Math.floor(timeRemaining / 1000),
-                expiresAt: new Date(new Date(firstLoginTime).getTime() + gameTimeInMs).toISOString()
+                isGameActive: isGameActive,
+                gameTimeRemaining: isGameActive ? Math.floor(gameTimeRemaining / 1000) : 0,
+                gameExpiresAt: new Date(new Date(firstLoginTime).getTime() + gameTimeInMs).toISOString()
             }
         });
 
@@ -81,21 +80,16 @@ const currentSession = async(req,res)=>{
         const timeSinceLogin = now - firstLoginTime;
         const gameTimeInHours = parseInt(process.env.GAME_TIME_HOURS) || 2;
         const gameTimeInMs = gameTimeInHours * 60 * 60 * 1000;
-        const timeRemaining = gameTimeInMs - timeSinceLogin;
-        
-        if (timeRemaining <= 0) {
-            return res.status(401).json({ 
-                success: false, 
-                message: `Game session expired. Your ${gameTimeInHours}-hour game time is over.` 
-            });
-        }
+        const gameTimeRemaining = gameTimeInMs - timeSinceLogin;
+        const isGameActive = gameTimeRemaining > 0;
         
         res.status(200).json({ 
             success: true, 
             data: {
                 ...team,
-                timeRemaining: Math.floor(timeRemaining / 1000),
-                expiresAt: new Date(firstLoginTime.getTime() + gameTimeInMs).toISOString()
+                isGameActive: isGameActive,
+                gameTimeRemaining: isGameActive ? Math.floor(gameTimeRemaining / 1000) : 0,
+                gameExpiresAt: new Date(firstLoginTime.getTime() + gameTimeInMs).toISOString()
             }, 
             message: 'Team session fetched successfully' 
         });

@@ -10,6 +10,7 @@ const levelsRoutes = require('./src/routes/levels.route');
 const uploadRoutes = require('./src/routes/upload.route');
 const submissionRoutes = require('./src/routes/submission.route');
 const leaderboardRoutes = require('./src/routes/leaderboard.route');
+const cacheRoutes = require('./src/routes/cache.route');
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use('/api/levels', levelsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/submission', submissionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/cache', cacheRoutes);
 
 app.get('/add-level', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'add-level.html'));

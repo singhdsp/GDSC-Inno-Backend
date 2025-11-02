@@ -3,6 +3,7 @@ const Team = require('../models/team.model');
 const TestCase = require('../models/testCases.model');
 const LevelProgress = require('../models/levelProgress.model');
 const CacheUtil = require('../utils/cache.util');
+const crypto = require('crypto');
 
 const addLevel = async(req, res) => {
     try {
@@ -15,8 +16,30 @@ const addLevel = async(req, res) => {
             testCases,
             hints,
             difficulty,
-            difficultyScore
+            difficultyScore,
+            adminUsername,
+            adminPassword
         } = req.body;
+
+        // Admin authentication
+        const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+        const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || crypto.createHash('sha256').update('admin123').digest('hex');
+        
+        if (!adminUsername || !adminPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Admin credentials required'
+            });
+        }
+        
+        const passwordHash = crypto.createHash('sha256').update(adminPassword).digest('hex');
+        
+        if (adminUsername !== ADMIN_USERNAME || passwordHash !== ADMIN_PASSWORD_HASH) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid admin credentials'
+            });
+        }
 
         if (!title || !description || !languageId || !language || !difficulty || !difficultyScore) {
             return res.status(400).json({
@@ -94,21 +117,14 @@ const getLevels = async (req, res) => {
             totalLevels = await Level.countDocuments();
             await CacheUtil.setLevelCount(totalLevels);
         }
-        const nextLevelNumber = (Number(team.levelCompleted) || 0) + 1;
-        let nextLevel = await CacheUtil.getLevelByNumber(nextLevelNumber);
-        if (nextLevel === null) {
-            nextLevel = await Level.findOne({ levelNumber: nextLevelNumber }).lean();
-            if (nextLevel) {
-                await CacheUtil.setLevel(nextLevel);
-            }
-        }
-
+        const currentLevel = (Number(team.levelCompleted) || 0) + 1;
+        
         res.status(200).json({
             success: true,
             message: 'Levels fetched successfully',
             count: totalLevels,
-            currentLevel: team.levelCompleted,
-            isMoreLevels: nextLevel ? true : false
+            currentLevel: currentLevel,
+            isMoreLevels: totalLevels && currentLevel < totalLevels
         });
     } catch (error) {
         res.status(500).json({success: false, message: 'Error fetching levels', error: error.message});
@@ -135,26 +151,75 @@ const getIndLevel = async(req, res) => {
 const getTeamCurrentLevel = async(req, res) => {
     try {
         const {id} = req.user;
-        const team = await Team.findById(id).select('levelCompleted').lean();
+        const team = await Team.findById(id).select('levelCompleted loginAt score').lean();0
+
         if (!team) {
             return res.status(404).json({success: false, message: 'Team not found'});
         }
-        
         const currentLevelNumber = (Number(team.levelCompleted) || 0) + 1;
+        
+        let totalLevels = await CacheUtil.getLevelCount();
+        if (totalLevels === null) {
+            totalLevels = await Level.countDocuments();
+            await CacheUtil.setLevelCount(totalLevels);
+        }
+        
+        if(totalLevels && currentLevelNumber > totalLevels) {
+            const latestProgress = await LevelProgress.findOne({teamId: id})
+                .sort({completedAt: -1})
+                .select('completedAt')
+                .lean();
+            
+            const timeTaken = latestProgress?.completedAt 
+                ? new Date(latestProgress.completedAt).getTime() - new Date(team.loginAt).getTime()
+                : new Date().getTime() - new Date(team.loginAt).getTime();
+            
+            return res.status(400).json({
+                success: false,
+                message: 'Congratulations! All levels completed',
+                isMoreLevels: false,
+                allCompleted: true,
+                result: {
+                    timeTaken: timeTaken,
+                    score: team.score,
+                    loginAt: team.loginAt,
+                    levelCompleted: team.levelCompleted
+                }
+            });
+        }
         let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
         if (!level) {
             level = await Level.findOne({levelNumber: currentLevelNumber}).select('-testCases -hints').lean();
-            if (!level) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'No more levels available',
-                    isMoreLevels: false
-                });
+            if (level) {
+                await CacheUtil.setLevel(level);
             }
-            await CacheUtil.setLevel(level);
         }
-
-        const levelProgress = await LevelProgress.findOne({ teamId: id, levelId: level._id });
+        
+        if (!level) {
+            const latestProgress = await LevelProgress.findOne({teamId: id})
+                .sort({completedAt: -1})
+                .select('completedAt startAt')
+                .lean();
+            
+            const timeTaken = latestProgress?.completedAt 
+                ? new Date(latestProgress.completedAt).getTime() - new Date(team.loginAt).getTime()
+                : new Date().getTime() - new Date(team.loginAt).getTime();
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Congratulations! All levels completed',
+                isMoreLevels: false,
+                allCompleted: true,
+                result: {
+                    timeTaken: timeTaken,
+                    score: team.score,
+                    loginAt: team.loginAt,
+                    levelCompleted: team.levelCompleted
+                }
+            });
+        }
+        
+        let levelProgress = await LevelProgress.findOne({ teamId: id, level: currentLevelNumber }).lean();
         if (!levelProgress) {
             await LevelProgress.create({
                 teamId: id,
@@ -163,9 +228,19 @@ const getTeamCurrentLevel = async(req, res) => {
                 startAt: new Date(),
             });
         }
-        res.status(200).json({success: true, data: level, message: 'Team current level fetched successfully'});
+        res.status(200).json({
+            success: true, 
+            data: level,
+            isMoreLevels: currentLevelNumber < totalLevels,
+            message: 'Team current level fetched successfully'
+        });
     } catch (error) {
-        res.status(500).json({success: false, message: 'Error fetching team current level', error: error.message});
+        console.error('Error in getTeamCurrentLevel:', error);
+        res.status(500).json({
+            success: false, 
+            message: 'Error fetching team current level', 
+            error: error.message
+        });
     }
 };
 
@@ -176,26 +251,27 @@ const getHintsForLevel = async (req, res) => {
         if (!team) {
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
-
+        
         const currentLevelNumber = (Number(team.levelCompleted) || 0) + 1;
-        let level = await CacheUtil.getLevelByNumber(currentLevelNumber);
+        
+        // Always fetch hints directly from DB (don't cache)
+        const level = await Level.findOne({ levelNumber: currentLevelNumber }).select('hints').lean();
         if (!level) {
-            level = await Level.findOne({ levelNumber: currentLevelNumber }).select('hints').lean();
-            if (!level) {
-                return res.status(404).json({ success: false, message: 'Level not found' });
-            }
-            await CacheUtil.setLevel(level);
+            return res.status(404).json({ success: false, message: 'Level not found' });
         }
 
-        if (level.hints.length === 0) {
+        if (!level.hints || level.hints.length === 0) {
             return res.status(200).json({ success: true, data: [], message: 'No hints available for this level' });
         }
-        const scoreToBeDeducted = process.env.HINT_SCORE_DEDUCTION || 1;
+        
+        const scoreToBeDeducted = parseInt(process.env.HINT_SCORE_DEDUCTION) || 1;
         team.score = Math.max(0, team.score - scoreToBeDeducted);
         await team.save();
         await CacheUtil.invalidateTeam(id);
+        
         res.status(200).json({ success: true, data: level.hints, message: 'Hints fetched successfully' });
     } catch (error) {
+        console.error('Error in getHintsForLevel:', error);
         res.status(500).json({ success: false, message: 'Error fetching hints', error: error.message });
     }
 };

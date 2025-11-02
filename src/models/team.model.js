@@ -24,7 +24,6 @@ const teamSchema = new mongoose.Schema({
     },
     loginAt:{
         type: Date,
-        default: Date.now
     },
 },
 { timestamps: true }

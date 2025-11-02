@@ -49,9 +49,11 @@ const submitLevel = async (req, res) => {
         });
 
         if (!levelProgress) {
-            return res.status(400).json({
-                success: false,
-                message: 'Level progress not found. Please access the level first before submitting.'
+            levelProgress = await LevelProgress.create({
+                teamId: teamId,
+                level: level.levelNumber,
+                levelId: level._id,
+                startAt: new Date(),
             });
         }
 

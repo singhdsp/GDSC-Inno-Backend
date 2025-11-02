@@ -197,38 +197,32 @@ console.log(input);`;
         case 71: // Python
             if (codeAnalysis.hasFunction) {
                 const functionName = codeAnalysis.functionName;
+                // Directly embed the parsed value as Python literal
                 if (inputAnalysis.isArray) {
                     return `${userCode}
 
 # Auto-generated test execution
 import json
-try:
-    input_data = json.loads('${input.replace(/'/g, "\\'")}')
-    if isinstance(input_data, list):
-        result = ${functionName}(*input_data)
-    else:
-        result = ${functionName}(input_data)
-    print(result)
-except Exception as e:
-    print(f"Error: {e}")`;
+input_data = ${input}
+if isinstance(input_data, list):
+    result = ${functionName}(*input_data)
+else:
+    result = ${functionName}(input_data)
+print(result)`;
                 } else {
                     return `${userCode}
 
 # Auto-generated test execution
 import json
-try:
-    input_data = json.loads('${input.replace(/'/g, "\\'")}')
-    result = ${functionName}(input_data)
-    print(result)
-except Exception as e:
-    print(f"Error: {e}")`;
+input_data = ${input}
+result = ${functionName}(input_data)
+print(result)`;
                 }
             } else {
                 return `${userCode}
 
-# Auto-generated test execution with input: ${input}
-import json
-input_data = json.loads('${input.replace(/'/g, "\\'")}')
+# Auto-generated test execution
+input_data = ${input}
 print(input_data)`;
             }
 
