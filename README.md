@@ -92,6 +92,9 @@ A high-performance backend API for a competitive coding challenge platform with 
    
    # Stop services
    docker-compose down
+   
+   # Check health status
+   curl http://localhost:5000/health
    ```
 
 2. **Manual Docker Build**
@@ -101,7 +104,40 @@ A high-performance backend API for a competitive coding challenge platform with 
    
    # Run container
    docker run -p 5000:5000 --env-file .env inno-backend
+   
+   # Check health status
+   curl http://localhost:5000/health
    ```
+
+### Health Check
+
+The application includes a comprehensive health check endpoint at `/health` that verifies:
+- **MongoDB**: Connection status and database responsiveness
+- **Redis**: Connection status and ping response
+- **Azure Blob Storage**: Optional check (if configured)
+- **Judge0 API**: Optional check (if configured)
+
+**Example Response (Healthy):**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "responseTime": "45ms",
+  "uptime": "3600s",
+  "services": {
+    "mongodb": { "status": "healthy", "message": "MongoDB is connected and responding" },
+    "redis": { "status": "healthy", "message": "Redis is connected and responding" },
+    "azure": { "status": "optional", "message": "Azure Storage not configured" },
+    "judge0": { "status": "healthy", "message": "Judge0 API is accessible" }
+  },
+  "version": "1.0.0"
+}
+```
+
+**Docker Health Checks:**
+- Built-in HEALTHCHECK instruction in Dockerfile (30s interval, 10s timeout)
+- Docker Compose healthcheck configuration for orchestration
+- Automatically reports unhealthy status if critical services fail
 
 ## 📁 Project Structure
 
@@ -112,6 +148,7 @@ backend/
 │   │   └── redis.config.js       # Redis connection setup
 │   ├── controllers/
 │   │   ├── auth.controller.js    # Authentication & session management
+│   │   ├── health.controller.js   # Health check & monitoring
 │   │   ├── levels.controller.js  # Level CRUD operations
 │   │   ├── submission.controller.js # Code submission & evaluation
 │   │   └── leaderboard.controller.js # Leaderboard generation
@@ -126,6 +163,7 @@ backend/
 │   │   └── levelProgress.model.js # Progress tracking
 │   ├── routes/
 │   │   ├── auth.route.js         # Auth endpoints
+│   │   ├── health.route.js       # Health check endpoint
 │   │   ├── levels.route.js       # Level endpoints
 │   │   ├── submission.route.js   # Submission endpoints
 │   │   ├── leaderboard.route.js  # Leaderboard endpoints
@@ -143,6 +181,13 @@ backend/
 ```
 
 ## 🔌 API Endpoints
+
+### Health Check
+- `GET /health` - Health check endpoint for monitoring and Docker health checks
+  - Returns 200 if all critical services (MongoDB, Redis) are healthy
+  - Returns 503 if any critical service is unhealthy
+  - Includes optional service checks (Azure, Judge0)
+  - Response includes service status, uptime, and response time
 
 ### Authentication
 - `POST /api/auth/login` - Team login (starts 2-hour session)

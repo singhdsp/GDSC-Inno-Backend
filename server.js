@@ -5,6 +5,7 @@ const cors = require('cors');
 const connectDB = require('./src/database/connection');
 const { connectRedis } = require('./src/config/redis.config');
 
+const healthRoutes = require('./src/routes/health.route');
 const authRoutes = require('./src/routes/auth.route');
 const levelsRoutes = require('./src/routes/levels.route');
 const uploadRoutes = require('./src/routes/upload.route');
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, 'views')));
 
+app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/levels', levelsRoutes);
 app.use('/api/upload', uploadRoutes);
