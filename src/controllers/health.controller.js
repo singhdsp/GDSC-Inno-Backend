@@ -107,7 +107,7 @@ const healthCheck = async (req, res) => {
         responseTime: `${responseTime}ms`,
         uptime: `${Math.floor(process.uptime())}s`,
         services: checks,
-        version: '1.0.1'
+        version: '1.0.2'
     });
 };
 
