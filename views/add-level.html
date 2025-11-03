@@ -374,12 +374,39 @@
                 </div>
             </div>
 
+            <!-- Admin Credentials -->
+            <div class="form-group">
+                <label for="adminUsername">Admin Username *</label>
+                <input type="text" id="adminUsername" name="adminUsername" required placeholder="Enter admin username">
+            </div>
+
+            <div class="form-group">
+                <label for="adminPassword">Admin Password *</label>
+                <input type="password" id="adminPassword" name="adminPassword" required placeholder="Enter admin password">
+                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    🔒 Credentials will be saved in localStorage for convenience
+                </small>
+            </div>
+
             <button type="submit" class="submit-btn" id="submitBtn">Create Level</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <script>
+        // Load saved admin credentials from localStorage on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUsername = localStorage.getItem('adminUsername');
+            const savedPassword = localStorage.getItem('adminPassword');
+            
+            if (savedUsername) {
+                document.getElementById('adminUsername').value = savedUsername;
+            }
+            if (savedPassword) {
+                document.getElementById('adminPassword').value = savedPassword;
+            }
+        });
+
         // Initialize EasyMDE Markdown Editor
         const easyMDE = new EasyMDE({
             element: document.getElementById('description'),
@@ -626,6 +653,14 @@ SELECT * FROM table;`
             // Get code template (edited or default)
             const codeTemplate = document.getElementById('codeTemplatePreview').value || codeTemplates[selectedLanguage];
 
+            // Get admin credentials
+            const adminUsername = document.getElementById('adminUsername').value;
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            // Save credentials to localStorage
+            localStorage.setItem('adminUsername', adminUsername);
+            localStorage.setItem('adminPassword', adminPassword);
+
             // Prepare payload
             const payload = {
                 title,
@@ -636,7 +671,9 @@ SELECT * FROM table;`
                 testCases,
                 hints,
                 difficulty: selectedDifficulty,
-                difficultyScore: selectedDifficultyScore
+                difficultyScore: selectedDifficultyScore,
+                adminUsername,
+                adminPassword
             };
 
             try {

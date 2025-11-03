@@ -3,7 +3,6 @@ const Team = require('../models/team.model');
 const TestCase = require('../models/testCases.model');
 const LevelProgress = require('../models/levelProgress.model');
 const CacheUtil = require('../utils/cache.util');
-const crypto = require('crypto');
 
 const addLevel = async(req, res) => {
     try {
@@ -23,7 +22,7 @@ const addLevel = async(req, res) => {
 
         // Admin authentication
         const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-        const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || crypto.createHash('sha256').update('admin123').digest('hex');
+        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
         
         if (!adminUsername || !adminPassword) {
             return res.status(401).json({
@@ -32,9 +31,7 @@ const addLevel = async(req, res) => {
             });
         }
         
-        const passwordHash = crypto.createHash('sha256').update(adminPassword).digest('hex');
-        
-        if (adminUsername !== ADMIN_USERNAME || passwordHash !== ADMIN_PASSWORD_HASH) {
+        if (adminUsername !== ADMIN_USERNAME || adminPassword !== ADMIN_PASSWORD) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid admin credentials'
