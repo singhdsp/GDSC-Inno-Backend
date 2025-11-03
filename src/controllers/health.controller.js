@@ -45,18 +45,21 @@ const checkRedis = async () => {
 const checkAzure = async () => {
     try {
         const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+        const containerName = process.env.AZURE_CONTAINER_NAME || 'gdsc-inno';
         
         if (!connectionString) {
             return { status: 'optional', message: 'Azure Storage not configured' };
         }
 
-        const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);        
-        const listPromise = blobServiceClient.listContainers().next();
+        const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+        const containerClient = blobServiceClient.getContainerClient(containerName);      
+
+        const propertiesPromise = containerClient.getProperties();
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Azure check timeout')), HEALTH_CHECK_TIMEOUT)
         );
 
-        await Promise.race([listPromise, timeoutPromise]);        
+        await Promise.race([propertiesPromise, timeoutPromise]);        
         return { status: 'healthy', message: 'Azure Blob Storage is accessible' };
     } catch (error) {
         return { status: 'unhealthy', message: `Azure error: ${error.message}` };
@@ -104,7 +107,7 @@ const healthCheck = async (req, res) => {
         responseTime: `${responseTime}ms`,
         uptime: `${Math.floor(process.uptime())}s`,
         services: checks,
-        version: process.env.npm_package_version || '1.0.0'
+        version: '1.0.1'
     });
 };
 
