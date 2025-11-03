@@ -1,4 +1,6 @@
 const axios = require('axios');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY || null;
