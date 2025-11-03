@@ -25,6 +25,7 @@ const getLeaderboard = async (req, res) => {
         const cachedLeaderboard = await CacheUtil.getLeaderboard(page, limit);
         if (cachedLeaderboard) {
             const userRankPipeline = [
+                { $match: { isActive: true } },
                 { $sort: { score: -1, teamId: 1 } },
                 { $group: { _id: null, teams: { $push: '$_id' } } },
                 { $unwind: { path: '$teams', includeArrayIndex: 'rank' } },
@@ -45,6 +46,9 @@ const getLeaderboard = async (req, res) => {
             });
         }
         const pipeline = [
+            {
+                $match: { isActive: true }
+            },
             {
                 $lookup: {
                     from: 'levelprogresses',

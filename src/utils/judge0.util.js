@@ -119,11 +119,22 @@ const parseInput = (input, languageId) => {
     try {
         // Try to parse as JSON first
         const parsed = JSON.parse(input);
+        const isArray = Array.isArray(parsed);
+        
+        // Check if it's a nested array for multiple parameters
+        // Nested array is when: all items are arrays AND there are multiple items
+        // [[1,2,3]] = single list parameter (only 1 item)
+        // [[1,2],[3,4]] = two list parameters (2+ items, all arrays)
+        // [1,2,3] = single list parameter (flat array)
+        const isNestedArray = isArray && 
+                             parsed.length > 1 && 
+                             parsed.every(item => Array.isArray(item));
         
         return {
             raw: input,
             parsed: parsed,
-            isArray: Array.isArray(parsed),
+            isArray: isArray,
+            isNestedArray: isNestedArray,
             isObject: typeof parsed === 'object' && !Array.isArray(parsed),
             isPrimitive: typeof parsed !== 'object',
             count: Array.isArray(parsed) ? parsed.length : 1,
@@ -135,6 +146,7 @@ const parseInput = (input, languageId) => {
             raw: input,
             parsed: input,
             isArray: false,
+            isNestedArray: false,
             isObject: false,
             isPrimitive: true,
             count: 1,
@@ -196,34 +208,44 @@ console.log(input);`;
 
         case 71: // Python
             if (codeAnalysis.hasFunction) {
-                const functionName = codeAnalysis.functionName;
-                // Directly embed the parsed value as Python literal
-                if (inputAnalysis.isArray) {
-                    return `${userCode}
+                const functionName = codeAnalysis.functionName || 'solution';
+                const paramCount = codeAnalysis.functionParams ? codeAnalysis.functionParams.length : 0;
+
+                return `${userCode}
 
 # Auto-generated test execution
 import json
-input_data = ${input}
-if isinstance(input_data, list):
-    result = ${functionName}(*input_data)
-else:
-    result = ${functionName}(input_data)
-print(result)`;
-                } else {
-                    return `${userCode}
+try:
+    # Parse input
+    input_data = json.loads('${input.replace(/'/g, "\\'")}')
+    if isinstance(input_data, list) and len(input_data) == 1 and isinstance(input_data[0], list):
+        input_data = input_data[0]
+    elif isinstance(input_data, list) and len(input_data) == 1 and all(isinstance(x, list) for x in input_data[0]):
+        input_data = input_data[0]
+        
+    if isinstance(input_data, list):
+        if ${paramCount} > 1:
+            result = ${functionName}(*input_data)
+        else:
+            result = ${functionName}(input_data)
+    else:
+        result = ${functionName}(input_data)
 
-# Auto-generated test execution
-import json
-input_data = ${input}
-result = ${functionName}(input_data)
-print(result)`;
-                }
+    # --- Print final output ---
+    print(result)
+
+except Exception as e:
+    print(f"Error: {e}")`;
             } else {
                 return `${userCode}
 
 # Auto-generated test execution
-input_data = ${input}
-print(input_data)`;
+import json
+try:
+    input_data = json.loads('${input.replace(/'/g, "\\'")}')
+    print(input_data)
+except Exception as e:
+    print(f"Error: {e}")`;
             }
 
         case 62: case 91: // Java
